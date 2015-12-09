@@ -23,6 +23,7 @@ class TopIO extends Bundle {
   val nasti_lite  = Bundle(new NASTILiteMasterIO, {case BusId => "lite"})
   val host        = new HostIO
   val interrupt   = UInt(INPUT, params(XLen))
+  val tracer      = Decoupled(new Trace)
 }
 
 class Top extends Module with TopLevelParameters {
@@ -105,6 +106,9 @@ class Top extends Module with TopLevelParameters {
 
   ioNetwork.io.managers <> Vec(nasti_lite.io.tl)
   nasti_lite.io.nasti <> io.nasti_lite
+
+  // tracer
+  tiles(0).io.tracer <> io.tracer
 }
 
 object Run {

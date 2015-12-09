@@ -52,6 +52,11 @@ module chip_top
    inout         spi_sclk,
    inout         spi_mosi,
    inout         spi_miso,
+
+   // tracer
+   input         trace_rxd,
+   output        trace_txd,
+   
 `endif
 
    // clock and reset
@@ -98,6 +103,11 @@ module chip_top
 
    // interrupt line
    logic [63:0]                interrupt;
+
+   // trace
+   logic                       trace_valid, trace_ready;
+   logic [63:0]                trace_pc;
+   logic [31:0]                trace_inst;
 
    // the Rocket chip
    Top Rocket
@@ -188,7 +198,11 @@ module chip_top
       .io_host_resp_valid            ( host_resp_valid                        ),
       .io_host_resp_bits_id          ( host_resp_id                           ),
       .io_host_resp_bits_data        ( host_resp_data                         ),
-      .io_interrupt                  ( interrupt                              )
+      .io_interrupt                  ( interrupt                              ),
+      .io_tracer_valid               ( trace_valid                            ),
+      .io_tracer_bits_pc             ( trace_pc                               ),
+      .io_tracer_bits_inst           ( trace_inst                             ),
+      .io_tracer_ready               ( trace_ready                            )
       );
 
    // the memory contoller
@@ -715,6 +729,19 @@ module chip_top
    assign host_resp_data = 0;
    assign host_resp_valid = 1'b0;
 
+   // tracer
+   tracer trace_debugger
+     (
+      .clk    ( clk          ),
+      .rstn   ( rstn         ),
+      .valid  ( trace_valid  ),
+      .pc     ( trace_pc     ),
+      .inst   ( trace_inst   ),
+      .ready  ( trace_ready  ),
+      .rxd    ( trace_rxd    ),
+      .txd    ( trace_txd    )
+      );
+
  `else // !`ifdef FPGA_FULL
 
    assign clk = clk_p;
@@ -747,6 +774,9 @@ module chip_top
       .resp_id      ( host_resp_id     ),
       .resp         ( host_resp_data   )
       );
+
+   // trace
+   assign trace_ready = 1;
 
  `endif // !`ifdef FPGA_FULL
 
@@ -854,6 +884,9 @@ module chip_top
       .resp_id      ( host_resp_id     ),
       .resp         ( host_resp_data   )
       );
+
+   // trace
+   assign trace_ready = 1;
 
 `endif
 
