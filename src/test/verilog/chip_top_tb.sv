@@ -10,6 +10,8 @@ module tb;
 `ifdef FPGA
          .rxd(1'b1),
          .txd(),
+         .trace_rxd(1'b1),
+         .trace_txd(),
 `endif
          .clk_p(clk),
          .clk_n(!clk),

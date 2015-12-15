@@ -108,6 +108,7 @@ module chip_top
    logic                       trace_valid, trace_ready;
    logic [63:0]                trace_pc;
    logic [31:0]                trace_inst;
+   logic                       trace_jmp;
 
    // the Rocket chip
    Top Rocket
@@ -202,6 +203,7 @@ module chip_top
       .io_tracer_valid               ( trace_valid                            ),
       .io_tracer_bits_pc             ( trace_pc                               ),
       .io_tracer_bits_inst           ( trace_inst                             ),
+      .io_tracer_bits_jmp            ( trace_jmp                              ),
       .io_tracer_ready               ( trace_ready                            )
       );
 
@@ -737,6 +739,7 @@ module chip_top
       .valid  ( trace_valid  ),
       .pc     ( trace_pc     ),
       .inst   ( trace_inst   ),
+      .jmp    ( trace_jmp    ),
       .ready  ( trace_ready  ),
       .rxd    ( trace_rxd    ),
       .txd    ( trace_txd    )

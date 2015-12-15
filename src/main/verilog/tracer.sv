@@ -8,6 +8,7 @@ module tracer
    input valid,
    input [63:0] pc,
    input [31:0] inst,
+   input [0:0] jmp,
    output ready,
 
    input rxd,
@@ -15,18 +16,21 @@ module tracer
    );
 
    localparam DEPTH = 4096;
+   //localparam DEPTH = 64;
    
    // FIFO
    logic [63:0] fifo_pc [0:DEPTH-1];
    logic [31:0] fifo_inst [0:DEPTH-1];
+   logic [0:0]  fifo_jmp [0:DEPTH-1];
    logic [63:0] fifo_pc_out;
    logic [31:0] fifo_inst_out;
+   logic [0:0]  fifo_jmp_out;
    logic [15:0] wp, rp;
    logic        fifo_valid;
 
    // trace
    logic        trace_read;
-   logic [95:0] trace;
+   logic [4*27-1:0] trace;
 
    // UART AXI
    logic [31:0] w_data, r_data;
@@ -43,9 +47,11 @@ module tracer
    always_ff @(posedge clk) begin
       fifo_pc_out <= fifo_pc[rp];
       fifo_inst_out <= fifo_inst[rp];
+      fifo_jmp_out <= fifo_jmp[rp];
       if(valid && ready) begin
          fifo_pc[wp] <= pc;
          fifo_inst[wp] <= inst;
+         fifo_jmp[wp] <= jmp;
       end
    end
 
@@ -62,7 +68,7 @@ module tracer
    always_ff @(posedge clk) begin
       trace_read <= state == S_IDLE && fifo_valid && cnt == 0;
       if(trace_read)
-        trace <= {fifo_pc_out, fifo_inst_out};
+        trace <= {fifo_pc_out, 4'h0, fifo_inst_out, 7'h0, fifo_jmp_out};
    end
 
    // FIFO read
@@ -114,7 +120,7 @@ module tracer
      if(!rstn)
        cnt <= 0;
      else if(state == S_SEND_RESP && b_valid) begin
-        if(cnt == 25) begin
+        if(cnt == 27) begin
            cnt <= 0;
         end else
           cnt <= cnt + 1;
@@ -158,11 +164,15 @@ module tracer
    
    always_comb
      if(cnt < 16)
-       w_data = ascii_hex(trace[(23-cnt)*4 +: 4]);
+       w_data = ascii_hex(trace[(26-cnt)*4 +: 4]);
      else if(cnt == 16)
        w_data = 8'h20;
      else if(cnt < 25)
-       w_data = ascii_hex(trace[(24-cnt)*4 +: 4]);
+       w_data = ascii_hex(trace[(26-cnt)*4 +: 4]);
+     else if(cnt == 25)
+       w_data = 8'h20;
+     else if(cnt < 27)
+       w_data = ascii_hex(trace[(26-cnt)*4 +: 4]);
      else
        w_data = 8'h0a;
 
